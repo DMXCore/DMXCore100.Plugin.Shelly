@@ -27,6 +27,12 @@ The device's MQTT broker connection (built-in or external) carries the
 commands, and the Shelly itself must have MQTT enabled and pointed at the
 same broker. The plugin shows disconnected while the broker is down.
 
+The **Discover** button lists Shelly devices found via mDNS, annotated with
+each device's own MQTT state (queried over its local HTTP API) — e.g.
+`shellyrgbw2-A4CF12F45478 (192.168.1.30, MQTT → 192.168.1.5:1883)` or
+`… (192.168.1.31, MQTT off)` — so a device pointed at the wrong broker (or
+none) is visible before you map it.
+
 ---
 
 # Anatomy of a DMX Core 100 plugin
