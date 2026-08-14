@@ -22,7 +22,7 @@ public class ShellyPlugin : IPlugin
     {
         Id = "shelly",
         Name = "Shelly",
-        Version = "1.1.0",
+        Version = "1.2.0",
         Description = "Drives Shelly Gen1 color devices (RGBW2 and similar) from DMX data via MQTT.",
     };
 
@@ -130,6 +130,8 @@ internal sealed class ShellyOutputProtocol(IPluginHost host, ShellyChannelMode m
         return Task.FromResult<IPluginOutputSession>(new ShellySession(host, mode, config.DestinationAddress));
     }
 
+    private static readonly HttpClient statusClient = new() { Timeout = TimeSpan.FromSeconds(2) };
+
     public async Task<IReadOnlyList<PluginOutputDestinationOption>?> GetDestinationOptionsAsync(bool refresh, CancellationToken cancellationToken)
     {
         // Gen1 devices announce over mDNS with the device id as the instance
@@ -138,13 +140,62 @@ internal sealed class ShellyOutputProtocol(IPluginHost host, ShellyChannelMode m
             ? await host.Mdns.RefreshServicesAsync("_http._tcp", cancellationToken)
             : await host.Mdns.GetServicesAsync("_http._tcp", cancellationToken);
 
-        return services
+        var shellies = services
             .Where(x => x.InstanceName.StartsWith("shelly", StringComparison.OrdinalIgnoreCase))
             .OrderBy(x => x.InstanceName)
-            .Select(x => new PluginOutputDestinationOption(
-                x.InstanceName,
-                string.IsNullOrEmpty(x.Address) ? x.InstanceName : $"{x.InstanceName} ({x.Address})"))
             .ToList();
+
+        // A discovered device only responds once its MQTT client points at
+        // the broker this Core uses, so surface the device's actual MQTT
+        // state right in the pick list (Gen1 exposes it over plain HTTP)
+        var options = await Task.WhenAll(shellies.Select(async service =>
+        {
+            var details = new List<string>();
+
+            if (!string.IsNullOrEmpty(service.Address))
+            {
+                details.Add(service.Address);
+
+                string? mqttStatus = await ProbeMqttStatus(service.Address, cancellationToken);
+                if (mqttStatus != null)
+                    details.Add(mqttStatus);
+            }
+
+            string label = details.Count > 0
+                ? $"{service.InstanceName} ({string.Join(", ", details)})"
+                : service.InstanceName;
+
+            return new PluginOutputDestinationOption(service.InstanceName, label);
+        }));
+
+        return options;
+    }
+
+    private static async Task<string?> ProbeMqttStatus(string address, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var response = await statusClient.GetAsync($"http://{address}/settings", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            using var json = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+
+            if (!json.RootElement.TryGetProperty("mqtt", out var mqtt))
+                return null;
+
+            if (!(mqtt.TryGetProperty("enable", out var enable) && enable.GetBoolean()))
+                return "MQTT off";
+
+            string? server = mqtt.TryGetProperty("server", out var serverProperty) ? serverProperty.GetString() : null;
+
+            return string.IsNullOrEmpty(server) ? "MQTT on" : $"MQTT → {server}";
+        }
+        catch
+        {
+            // Unreachable, protected settings, unexpected payload: no annotation
+            return null;
+        }
     }
 }
 
