@@ -1,0 +1,8 @@
+{
+  "id": "shelly",
+  "name": "Shelly",
+  "version": "1.0.0",
+  "entryAssembly": "DMXCore100.ShellyPlugin.dll",
+  "minSdkVersion": "1.2",
+  "author": "DMX Core"
+}
