@@ -21,7 +21,7 @@ MQTT output) with:
 - **Destination Address** — the Shelly device id (the `shellies/{id}` MQTT
   topic segment, e.g. `shellyrgbw2-A4CF12F45478`; it's also the device's
   mDNS name)
-- **Channel Offset** — where the device's channels start within the universe
+- **Start Channel** — the DMX start address of the device's channels within the slot
 
 The device's MQTT broker connection (built-in or external) carries the
 commands, and the Shelly itself must have MQTT enabled and pointed at the
