@@ -31,5 +31,8 @@ Until that is on NuGet.org, pack it locally from the Software repo with a
 package version higher than the latest published one:
 
 ```powershell
-dotnet pack <Software>/src/PluginSdk -p:Version=1.3.0 -o D:\Projects\DMXCore\LocalNuGet
+dotnet pack <Software>/src/PluginSdk -p:Version=1.3.0 -o local-feed
 ```
+
+(`local-feed/` is this repo's dev-only package source; nupkgs in it are not
+committed.)
