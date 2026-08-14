@@ -22,22 +22,50 @@ public class ShellyPlugin : IPlugin
     {
         Id = "shelly",
         Name = "Shelly",
-        Version = "1.0.0",
+        Version = "1.1.0",
         Description = "Drives Shelly Gen1 color devices (RGBW2 and similar) from DMX data via MQTT.",
     };
 
     public Task InitializeAsync(IPluginHost host, CancellationToken cancellationToken)
     {
+        // One profile, one personality per protocol mode — lets the fixture
+        // editor patch a Shelly with the right channel layout and prefill
+        // from an existing mapping
+        this.registrations.Add(host.Outputs.RegisterFixtureProfile(new PluginFixtureProfileDescriptor
+        {
+            Code = "SHELLY_COLOR",
+            Name = "Gen1 Color (RGBW2)",
+            Manufacturer = "Shelly",
+            Personalities =
+            [
+                new PluginFixturePersonality
+                {
+                    Name = "RGB",
+                    Channels = [PluginFixtureFunction.Red, PluginFixtureFunction.Green, PluginFixtureFunction.Blue],
+                },
+                new PluginFixturePersonality
+                {
+                    Name = "RGBW",
+                    Channels = [PluginFixtureFunction.Red, PluginFixtureFunction.Green, PluginFixtureFunction.Blue, PluginFixtureFunction.White],
+                },
+                new PluginFixturePersonality
+                {
+                    Name = "RGBW+intensity",
+                    Channels = [PluginFixtureFunction.Red, PluginFixtureFunction.Green, PluginFixtureFunction.Blue, PluginFixtureFunction.White, PluginFixtureFunction.Intensity],
+                },
+            ],
+        }));
+
         this.registrations.Add(host.Outputs.RegisterOutputProtocol(
-            Descriptor("SHELLYGEN1COLORRGB", "Shelly Gen1 Color RGB"),
+            Descriptor("SHELLYGEN1COLORRGB", "Shelly Gen1 Color RGB", "RGB"),
             new ShellyOutputProtocol(host, ShellyChannelMode.Rgb)));
 
         this.registrations.Add(host.Outputs.RegisterOutputProtocol(
-            Descriptor("SHELLYGEN1COLORRGBW", "Shelly Gen1 Color RGBW"),
+            Descriptor("SHELLYGEN1COLORRGBW", "Shelly Gen1 Color RGBW", "RGBW"),
             new ShellyOutputProtocol(host, ShellyChannelMode.Rgbw)));
 
         this.registrations.Add(host.Outputs.RegisterOutputProtocol(
-            Descriptor("SHELLYGEN1COLORRGBWI", "Shelly Gen1 Color RGBW+intensity"),
+            Descriptor("SHELLYGEN1COLORRGBWI", "Shelly Gen1 Color RGBW+intensity", "RGBW+intensity"),
             new ShellyOutputProtocol(host, ShellyChannelMode.RgbwIntensity)));
 
         // The integration is only as connected as the broker
@@ -63,7 +91,7 @@ public class ShellyPlugin : IPlugin
         return Task.CompletedTask;
     }
 
-    private static OutputProtocolDescriptor Descriptor(string id, string displayName)
+    private static OutputProtocolDescriptor Descriptor(string id, string displayName, string personality)
     {
         return new OutputProtocolDescriptor
         {
@@ -73,6 +101,9 @@ public class ShellyPlugin : IPlugin
             PortTypeDisplayName = "Shelly",
             // Shelly Gen1 devices choke above ~10 commands/s
             MaxUpdatesPerSecond = 10,
+            SupportsDestinationDiscovery = true,
+            SuggestedProfileCode = "SHELLY_COLOR",
+            SuggestedPersonality = personality,
         };
     }
 }
@@ -97,6 +128,23 @@ internal sealed class ShellyOutputProtocol(IPluginHost host, ShellyChannelMode m
             throw new InvalidOperationException("Destination address (the Shelly device id) is required");
 
         return Task.FromResult<IPluginOutputSession>(new ShellySession(host, mode, config.DestinationAddress));
+    }
+
+    public async Task<IReadOnlyList<PluginOutputDestinationOption>?> GetDestinationOptionsAsync(bool refresh, CancellationToken cancellationToken)
+    {
+        // Gen1 devices announce over mDNS with the device id as the instance
+        // name — the same string the MQTT topic uses
+        var services = refresh
+            ? await host.Mdns.RefreshServicesAsync("_http._tcp", cancellationToken)
+            : await host.Mdns.GetServicesAsync("_http._tcp", cancellationToken);
+
+        return services
+            .Where(x => x.InstanceName.StartsWith("shelly", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.InstanceName)
+            .Select(x => new PluginOutputDestinationOption(
+                x.InstanceName,
+                string.IsNullOrEmpty(x.Address) ? x.InstanceName : $"{x.InstanceName} ({x.Address})"))
+            .ToList();
     }
 }
 
