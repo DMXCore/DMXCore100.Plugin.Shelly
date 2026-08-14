@@ -4,6 +4,16 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- The SDK generates manifest.json and PluginBuildInfo from these -->
+    <PluginId>shelly</PluginId>
+    <PluginDisplayName>Shelly</PluginDisplayName>
+    <Version>1.2.1</Version>
+    <Authors>DMX Core</Authors>
+    <!-- Floor: oldest SDK contract this plugin actually requires. Without
+         this override the floor would default to the contract of the SDK
+         assembly we compile against, which is newer than we need. -->
+    <PluginMinSdkVersion>1.3</PluginMinSdkVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,10 +21,6 @@
          its dependencies) at runtime and always resolves them to its own
          copies, so they must not be shipped inside the .dmxplugin. -->
     <PackageReference Include="DMXCore.PluginSdk" Version="1.*" ExcludeAssets="runtime" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
