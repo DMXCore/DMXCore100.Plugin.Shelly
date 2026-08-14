@@ -40,10 +40,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --cleanup-tag --yes || true
-          # A normal (non-prerelease) release: the DMX Core 100 product build
-          # downloads it with DownloadGitHubRelease's "latest release" mode,
-          # which skips prereleases.
-          gh release create latest artifacts/*.dmxplugin \
-            --title "Latest build" \
-            --notes "Automatically packaged from \`${GITHUB_SHA}\`."
+          # Update in place instead of delete+recreate: a product build that
+          # downloads the "latest release" mid-update must never find no
+          # release at all.
+          if gh release view latest > /dev/null 2>&1; then
+            gh release upload latest artifacts/*.dmxplugin --clobber
+            gh release edit latest --notes "Automatically packaged from \`${GITHUB_SHA}\`."
+            git tag -f latest "${GITHUB_SHA}"
+            git push -f origin latest
+          else
+            # A normal (non-prerelease) release: the DMX Core 100 product
+            # build downloads it with DownloadGitHubRelease's "latest
+            # release" mode, which skips prereleases.
+            gh release create latest artifacts/*.dmxplugin \
+              --title "Latest build" \
+              --notes "Automatically packaged from \`${GITHUB_SHA}\`."
+          fi
