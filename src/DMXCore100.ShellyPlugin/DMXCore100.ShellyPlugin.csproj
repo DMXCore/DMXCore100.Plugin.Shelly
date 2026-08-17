@@ -19,6 +19,9 @@
     <PackageProjectUrl>https://docs.dmxcore.com/dmx-core-100</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Embedded icon (not iconUrl) is a nuget.org reserved-prefix review
+         criterion; icon.png is the same 128x128 logo the SDK packages ship. -->
+    <PackageIcon>icon.png</PackageIcon>
     <PackageTags>shelly;mqtt;smart-lighting</PackageTags>
     <!-- Floor: oldest SDK contract this plugin actually requires. Without
          this override the floor would default to the contract of the SDK
@@ -35,6 +38,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
 </Project>
