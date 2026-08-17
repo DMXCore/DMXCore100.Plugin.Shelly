@@ -17,6 +17,7 @@
     <PackageId>DMXCore.Plugin.Shelly</PackageId>
     <Description>Shelly output for the DMX Core 100 lighting controller: drives Shelly Gen1 color devices (RGBW2 and similar) from DMX channel data over MQTT.</Description>
     <PackageProjectUrl>https://docs.dmxcore.com/dmx-core-100</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>shelly;mqtt;smart-lighting</PackageTags>
     <!-- Floor: oldest SDK contract this plugin actually requires. Without
