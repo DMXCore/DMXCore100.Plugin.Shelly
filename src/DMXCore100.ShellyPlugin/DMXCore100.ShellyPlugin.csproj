@@ -10,6 +10,15 @@
     <PluginDisplayName>Shelly</PluginDisplayName>
     <Version>1.2.1</Version>
     <Authors>DMX Core</Authors>
+
+    <!-- Plugin registry (nuget.org) package metadata. DMXCore.Plugin.* is the
+         reserved first-party prefix; the package is produced by `dotnet pack`
+         via the DMXCore.PluginSdk pack targets. -->
+    <PackageId>DMXCore.Plugin.Shelly</PackageId>
+    <Description>Shelly output for the DMX Core 100 lighting controller: drives Shelly Gen1 color devices (RGBW2 and similar) from DMX channel data over MQTT.</Description>
+    <PackageProjectUrl>https://docs.dmxcore.com/dmx-core-100</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>shelly;mqtt;smart-lighting</PackageTags>
     <!-- Floor: oldest SDK contract this plugin actually requires. Without
          this override the floor would default to the contract of the SDK
          assembly we compile against, which is newer than we need. -->
@@ -21,6 +30,10 @@
          its dependencies) at runtime and always resolves them to its own
          copies, so they must not be shipped inside the .dmxplugin. -->
     <PackageReference Include="DMXCore.PluginSdk" Version="1.*" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
 </Project>

@@ -27,7 +27,29 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: shelly-plugin
-          path: artifacts/*.dmxplugin
+          path: |
+            artifacts/*.dmxplugin
+            artifacts/*.nupkg
+
+      # Plugin registry: nuget.org is where DMX Core 100 devices browse,
+      # install and update plugins from, so pushing here IS the release.
+      # --skip-duplicate makes re-pushing an already published version a
+      # no-op, so bumping <Version> in the csproj is what publishes.
+      - name: Publish to nuget.org
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          pkg=$(ls artifacts/*.nupkg | head -1)
+          # A package pushed to nuget.org can never be deleted, so refuse a
+          # package that lacks the plugin payload (built with an SDK that
+          # predates registry packaging, or a broken pack).
+          if ! unzip -l "$pkg" | grep -q 'content/plugin.dmxplugin'; then
+            echo "::error::$pkg lacks content/plugin.dmxplugin - not a DmxCorePlugin package"
+            exit 1
+          fi
+          dotnet nuget push "$pkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --skip-duplicate
 
       # Workflow artifacts expire; keep a permanent copy of the current build
       # as a single rolling release. Recreated (not appended) so the "latest"
