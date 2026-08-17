@@ -171,15 +171,25 @@ To test logic without a device, use the
 [`DMXCore.PluginSdk.Testing`](https://www.nuget.org/packages/DMXCore.PluginSdk.Testing)
 package: `TestPluginHost` is an in-memory host that records what your plugin
 does (MQTT publishes, registrations) and lets you simulate host events and
-deliver output values deterministically.
+deliver output values deterministically. This repo's
+[`tests/`](tests/DMXCore100.ShellyPlugin.Tests) project does exactly that —
+registrations, the MQTT command for each channel mode, broker-down
+behavior, connection state, and mDNS discovery — and CI runs it on every
+push (`dotnet test tests/DMXCore100.ShellyPlugin.Tests`).
 
 ## Packaging and CI
 
-`pack.ps1` / `pack.sh` publish the project and zip the output — that zip *is*
-the `.dmxplugin`. The [GitHub Actions workflow](.github/workflows/build.yml)
-packs on every push and maintains a rolling `latest` release, which is how
-the DMX Core product builds bundle first-party plugins. For your own plugin,
-users simply upload the `.dmxplugin` on the Plugins page.
+`pack.ps1` / `pack.sh` run `dotnet pack`; the SDK's pack targets produce the
+registry package (`DMXCore.Plugin.Shelly.<version>.nupkg`, NuGet package type
+`DmxCorePlugin`, payload `content/plugin.dmxplugin`) and the bare
+`shelly.dmxplugin` for manual upload. The
+[GitHub Actions workflow](.github/workflows/build.yml) tests, packs, and on
+`main` publishes the package to nuget.org via Trusted Publishing — nuget.org
+is the plugin registry, so devices see the new version on their Plugins →
+Browse page within minutes and offer it as an update. For your own plugin,
+publish under your own package id the same way (see the
+[Example plugin](https://github.com/DMXCore/DMXCore100.Plugin.Example#publishing-your-own-plugin)),
+or have users upload the `.dmxplugin` on the Plugins page.
 
 Gotcha for Windows-created repos: shell scripts need the execute bit in git
 (`git update-index --chmod=+x pack.sh`) or Linux CI fails with exit code 126.
