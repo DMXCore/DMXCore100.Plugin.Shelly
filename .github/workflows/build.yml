@@ -50,14 +50,13 @@ jobs:
 
       # Keyless (Trusted Publishing): GitHub's OIDC token is exchanged for a
       # one-hour nuget.org API key against the trusted-publishing policy
-      # registered on nuget.org for this repo + workflow file. NUGET_USER is
-      # the nuget.org profile name that owns the policy.
+      # registered on nuget.org for this repo + workflow file.
       - name: NuGet login (OIDC)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: nuget-login
         uses: NuGet/login@v1
         with:
-          user: ${{ secrets.NUGET_USER }}
+          user: DMXCore  # nuget.org organization that owns the trusted-publishing policy
 
       - name: Publish to nuget.org
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
