@@ -8,7 +8,7 @@
     <!-- The SDK generates manifest.json and PluginBuildInfo from these -->
     <PluginId>shelly</PluginId>
     <PluginDisplayName>Shelly</PluginDisplayName>
-    <Version>1.2.2</Version>
+    <Version>1.2.3</Version>
     <Authors>DMX Core</Authors>
 
     <!-- Plugin registry (nuget.org) package metadata. DMXCore.Plugin.* is the
@@ -22,7 +22,7 @@
     <!-- Embedded icon (not iconUrl) is a nuget.org reserved-prefix review
          criterion; icon.png is the same 128x128 logo the SDK packages ship. -->
     <PackageIcon>icon.png</PackageIcon>
-    <PackageTags>shelly;mqtt;smart-lighting</PackageTags>
+    <PackageTags>shelly;mqtt;requires-mqtt;smart-lighting</PackageTags>
     <!-- Floor: oldest SDK contract this plugin actually requires. Without
          this override the floor would default to the contract of the SDK
          assembly we compile against, which is newer than we need. -->
